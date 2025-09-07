@@ -135,11 +135,11 @@ class GloomhavenEnemyManager:
             },
             "Bandit Commander": {
                 "is_boss": True, 
-                "health": [6, 7, 8, 9, 10, 11, 12, 13],  # Levels 0-7
+                "health": ["8*C", "10*C", "12*C", "13*C", "15*C", "16*C", "19*C", "23*C"],  # Levels 0-7
                 "elite_health": [10, 12, 14, 16, 18, 20, 22, 24],
-                "move": [2, 2, 2, 3, 3, 3, 3, 4],
+                "move": [3, 3, 4, 4, 4, 5, 5, 5],
                 "elite_move": [2, 2, 3, 3, 3, 4, 4, 4],
-                "attack": [2, 2, 3, 3, 3, 4, 4, 4],
+                "attack": [3, 3, 3, 4, 4, 5, 5, 5],
                 "elite_attack": [3, 3, 4, 4, 5, 5, 6, 6],
                 "range": [0, 0, 0, 0, 0, 0, 0, 0],
                 "elite_range": [0, 0, 0, 0, 0, 0, 0, 0],
@@ -147,14 +147,57 @@ class GloomhavenEnemyManager:
                 "elite_traits": "Shield 2, Retaliate 1",
                 "conditional_traits": {},
                 "cards": [
-                    {"name": "Attack {attack}", "initiative": "15"},
-                    {"name": "Move {move} Attack {attack-1}", "initiative": "35"},
-                    {"name": "Shield 1 Heal 1", "initiative": "50"},
-                    {"name": "Push 1 Attack {attack-1}", "initiative": "20"},
-                    {"name": "Move 1 Attack {attack+1}", "initiative": "40"},
-                    {"name": "Shield 2", "initiative": "10"},
-                    {"name": "Attack {attack} Target 2", "initiative": "30"},
-                    {"name": "Move {move+1}", "initiative": "60"}
+                    {"name": "Summon Living Bones", "initiative": "11"},
+                    {"name": "Summon Living Bones", "initiative": "14"},
+                    {"name": "Summon Living Bones, Redraw", "initiative": "17"},
+                    {"name": "MOVE {move}, ATTACK {attack}", "initiative": "36"},
+                    {"name": "MOVE {move-1}, ATTACK {attack-1} at RANGE 3, Target 2", "initiative": "52"},
+                    {"name": "MOVE to next door and reveal room", "initiative": "73"},
+                    {"name": "MOVE to next door and reveal room", "initiative": "79"},
+                    {"name": "MOVE to next door and reveal room, Redraw", "initiative": "85"}
+                ]
+            },
+            "Bandit Guard": {
+                "is_boss": False,
+                "health": [5, 6, 6, 9, 10, 11, 14, 16],
+                "elite_health": [9, 9, 10, 10, 11, 12, 14, 14],
+                "move": [2, 3, 3, 3, 4, 4, 4, 4],
+                "elite_move": [2, 3, 3, 3, 3, 3, 3, 3],
+                "attack": [2, 2, 3, 3, 3, 4, 4, 4],
+                "elite_attack": [3, 3, 4, 4, 4, 5, 5, 5],
+                "range": [0, 0, 0, 0, 0, 0, 0, 0],
+                "elite_range": [0, 0, 0, 0, 0, 0, 0, 0],
+                "traits": "",
+                "elite_traits": "",
+                "conditional_traits": {
+                    "elite": [
+                        {
+                            "levels": [1, 2],
+                            "traits": "Shield 1"
+                        },
+                        {
+                            "levels": [3],
+                            "traits": "Shield 2"
+                        },
+                        {
+                            "levels": [4, 5, 6],
+                            "traits": "Shield 2, MUDDLE"
+                        },
+                        {
+                            "levels": [7],
+                            "traits": "Shield 3, MUDDLE"
+                        }
+                    ]
+                },
+                "cards": [
+                    {"name": "MOVE {move-1}, ATTACK {attack-1}, Create a 3 damage trap in the hex closest to an enemy", "initiative": "14"},
+                    {"name": "MOVE {move+1}, ATTACK {attack-1}", "initiative": "16"},
+                    {"name": "MOVE {move}, ATTACK {attack-1} at RANGE {range+1}, IMMOBOLIZE, Redraw", "initiative": "29"},
+                    {"name": "MOVE {move}, ATTACK {attack}", "initiative": "31"},
+                    {"name": "MOVE {move}, ATTACK {attack+1} at RANGE {range-1}", "initiative": "32"},
+                    {"name": "MOVE {move-1}, ATTACK {attack+1}", "initiative": "44"},
+                    {"name": "Attack {attack-1} Target 2", "initiative": "56"},
+                    {"name": "ATTACK {attack+1} at RANGE {range+1}, Redraw", "initiative": "68"}
                 ]
             },
             "Living Bones": {
@@ -278,13 +321,26 @@ class GloomhavenEnemyManager:
             conditional_key = "elite" if is_elite else "normal"
             
             if conditional_key in enemy_data["conditional_traits"]:
+                # Handle both old format (dict) and new format (list of dicts)
                 conditional_data = enemy_data["conditional_traits"][conditional_key]
-                if current_level in conditional_data["levels"]:
-                    # Add conditional traits to base traits
-                    if base_traits:
-                        return f"{base_traits}, {conditional_data['traits']}"
-                    else:
-                        return conditional_data["traits"]
+                
+                # If it's a list of conditions (new format)
+                if isinstance(conditional_data, list):
+                    for condition in conditional_data:
+                        if current_level in condition["levels"]:
+                            # Add conditional traits to base traits
+                            if base_traits:
+                                return f"{base_traits}, {condition['traits']}"
+                            else:
+                                return condition["traits"]
+                # If it's a single condition (old format)
+                elif isinstance(conditional_data, dict):
+                    if current_level in conditional_data["levels"]:
+                        # Add conditional traits to base traits
+                        if base_traits:
+                            return f"{base_traits}, {conditional_data['traits']}"
+                        else:
+                            return conditional_data["traits"]
         
         return base_traits
     
